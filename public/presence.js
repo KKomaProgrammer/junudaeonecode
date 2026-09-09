@@ -19,14 +19,31 @@
   `;
   document.head.appendChild(style);
 
-  const refs = {
-    junwoo: junwooStatus,
-    daewon: daewonStatus
-  };
+  const refs = { junwoo: junwooStatus, daewon: daewonStatus };
+  const SESSION_KEY = "junudae_presence_session_v2";
+  const REFRESH_MS = 3000;
+  const HEARTBEAT_MS = 15000;
 
   let refreshTimer = null;
   let heartbeatTimer = null;
   let busy = false;
+  let leaving = false;
+
+  function makeSessionId() {
+    try {
+      const existing = sessionStorage.getItem(SESSION_KEY);
+      if (existing) return existing;
+      const bytes = new Uint8Array(12);
+      crypto.getRandomValues(bytes);
+      const id = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+      sessionStorage.setItem(SESSION_KEY, id);
+      return id;
+    } catch {
+      return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 14)}`;
+    }
+  }
+
+  const sessionId = makeSessionId();
 
   function formatLastSeen(value) {
     if (!value) return "접속 기록 없음";
@@ -37,7 +54,8 @@
       month: "numeric",
       day: "numeric",
       hour: "numeric",
-      minute: "2-digit"
+      minute: "2-digit",
+      second: "2-digit"
     })}`;
   }
 
@@ -52,7 +70,8 @@
     }
 
     if (data.online) {
-      element.textContent = "접속 중";
+      const count = Number(data.activeSessions || 0);
+      element.textContent = count > 1 ? `접속 중 · ${count}개 세션` : "접속 중";
       element.dataset.online = "true";
     } else {
       element.textContent = formatLastSeen(data.lastSeen);
@@ -67,22 +86,50 @@
     }
   }
 
-  async function sendHeartbeat() {
-    if (document.visibilityState !== "visible") return;
+  async function postPresence(action = "heartbeat", keepalive = false) {
     try {
-      await fetch("/api/presence", {
+      const response = await fetch("/api/presence", {
         method: "POST",
         cache: "no-store",
-        keepalive: true
+        keepalive,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, sessionId })
       });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  function beaconLeave() {
+    if (leaving) return;
+    leaving = true;
+    const body = JSON.stringify({ action: "leave", sessionId });
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon("/api/presence", new Blob([body], { type: "application/json" }));
+      } else {
+        fetch("/api/presence", {
+          method: "POST",
+          keepalive: true,
+          headers: { "Content-Type": "application/json" },
+          body
+        }).catch(() => {});
+      }
     } catch {}
+  }
+
+  async function sendHeartbeat() {
+    if (document.visibilityState !== "visible") return false;
+    leaving = false;
+    return postPresence("heartbeat", true);
   }
 
   async function refreshPresence() {
     if (busy) return;
     busy = true;
     try {
-      const response = await fetch("/api/presence", { cache: "no-store" });
+      const response = await fetch(`/api/presence?_=${Date.now()}`, { cache: "no-store" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         renderUnavailable(response.status === 401 ? "로그인 후 상태 확인" : "상태 확인 불가");
@@ -105,21 +152,32 @@
   function startTimers() {
     clearInterval(refreshTimer);
     clearInterval(heartbeatTimer);
-    refreshTimer = setInterval(refreshPresence, 20000);
-    heartbeatTimer = setInterval(sendHeartbeat, 45000);
+    refreshTimer = setInterval(refreshPresence, REFRESH_MS);
+    heartbeatTimer = setInterval(sendHeartbeat, HEARTBEAT_MS);
   }
 
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") heartbeatAndRefresh();
+    if (document.visibilityState === "visible") {
+      leaving = false;
+      heartbeatAndRefresh();
+    } else {
+      beaconLeave();
+      setTimeout(refreshPresence, 250);
+    }
   });
 
+  window.addEventListener("pagehide", (event) => {
+    if (!event.persisted) beaconLeave();
+  });
+  window.addEventListener("beforeunload", beaconLeave);
+
   identityDialog?.addEventListener("close", () => {
-    setTimeout(heartbeatAndRefresh, 250);
+    setTimeout(heartbeatAndRefresh, 80);
   });
 
   if (identityName) {
     const observer = new MutationObserver(() => {
-      setTimeout(heartbeatAndRefresh, 250);
+      setTimeout(heartbeatAndRefresh, 80);
     });
     observer.observe(identityName, { childList: true, characterData: true, subtree: true });
   }
