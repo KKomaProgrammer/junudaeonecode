@@ -25,39 +25,31 @@
       <section class="editor-card" aria-label="코드 편집기">
         <div class="toolbar">
           <div class="language-group">
-            <label for="languageSelect">언어</label>
-            <div class="language-select-wrap">
-              <select id="languageSelect" aria-label="코드 언어">
-                <option value="plaintext">Plain Text</option>
-                <option value="javascript">JavaScript</option>
-                <option value="typescript">TypeScript</option>
-                <option value="json">JSON</option>
-                <option value="html">HTML</option>
-                <option value="xml">XML</option>
-                <option value="css">CSS</option>
-                <option value="python">Python</option>
-                <option value="java">Java</option>
-                <option value="c">C</option>
-                <option value="cpp">C++</option>
-                <option value="csharp">C#</option>
-                <option value="kotlin">Kotlin</option>
-                <option value="swift">Swift</option>
-                <option value="php">PHP</option>
-                <option value="ruby">Ruby</option>
-                <option value="go">Go</option>
-                <option value="rust">Rust</option>
-                <option value="shell">Shell</option>
-                <option value="sql">SQL</option>
-                <option value="markdown">Markdown</option>
-                <option value="yaml">YAML</option>
-              </select>
-              <span id="recognizedBadge" class="recognized-badge">인식됨</span>
+            <span class="language-label">언어</span>
+            <div id="languagePicker" class="language-picker">
+              <button id="languageTrigger" class="language-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="languageTriggerText" class="language-trigger-text">자동 인식</span>
+                <span id="recognizedBadge" class="recognized-badge" hidden>인식됨</span>
+                <svg class="chevron-icon" viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="m6 8 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div id="languageMenu" class="language-menu" hidden>
+                <div class="language-search-wrap">
+                  <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <circle cx="8.5" cy="8.5" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="m12.4 12.4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <input id="languageSearch" type="search" autocomplete="off" placeholder="언어 검색" aria-label="언어 검색">
+                </div>
+                <div id="languageOptions" class="language-options" role="listbox" aria-label="코드 언어"></div>
+              </div>
             </div>
-            <button id="autoDetectBtn" class="button button-quiet button-small" type="button">자동 감지</button>
           </div>
 
           <div class="toolbar-actions">
             <button id="copyBtn" class="button button-quiet" type="button">코드 복사</button>
+            <button id="messageShareBtn" class="button button-quiet" type="button">문자로 공유하기</button>
             <button id="shareBtn" class="button button-primary" type="button">공유 링크 만들기</button>
           </div>
         </div>
@@ -66,7 +58,10 @@
 
         <div class="editor-footer">
           <span id="codeStats">0자 · 1줄</span>
-          <span id="accessState"></span>
+          <div class="footer-status">
+            <span id="draftState">자동 임시저장</span>
+            <span id="accessState"></span>
+          </div>
         </div>
       </section>
     </main>
@@ -103,6 +98,52 @@
         <button id="createShareBtn" class="button button-primary" type="button">만들기</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="messageGuideDialog" class="fade-dialog compact-dialog">
+    <div class="dialog-card">
+      <div class="dialog-heading compact-heading">
+        <div>
+          <h2>문자로 공유하기</h2>
+          <p>파일을 메시지로 보내기 전에 확인해 주세요.</p>
+        </div>
+      </div>
+      <p class="guide-copy">내용이 없거나 깨진 png로 다운로드 됩니다. 메시지로 공유한 후 상대방이 확장자를 png에서 txt로 변경하라고 알려주세요. 휴대폰으로 공유를 클릭해 전송도 가능합니다.</p>
+      <div class="dialog-actions">
+        <button id="guideConfirmBtn" class="button button-quiet" type="button">확인</button>
+        <button id="guideShareBtn" class="button button-primary" type="button">공유</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="messageShareDialog" class="fade-dialog compact-dialog">
+    <div class="dialog-card">
+      <div class="dialog-heading compact-heading">
+        <div>
+          <h2>문자로 공유하기</h2>
+          <p>현재 코드를 .png 파일로 준비합니다.</p>
+        </div>
+        <button id="messageInfoBtn" class="info-icon-button" type="button" aria-label="문자로 공유하기 안내 보기">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M12 10.8v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="12" cy="7.4" r="1.1" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+      <div class="file-preview-row">
+        <div class="file-type">PNG</div>
+        <div class="file-preview-text">
+          <strong id="messageFileName">code.png</strong>
+          <span>상대방이 받은 뒤 확장자를 .txt로 변경</span>
+        </div>
+      </div>
+      <div class="dialog-actions wrap-actions">
+        <button id="messageCloseBtn" class="button button-quiet" type="button">닫기</button>
+        <button id="messageDownloadBtn" class="button button-quiet" type="button">PNG 다운로드</button>
+        <button id="deviceShareBtn" class="button button-primary" type="button">휴대폰으로 공유</button>
+      </div>
+    </div>
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
