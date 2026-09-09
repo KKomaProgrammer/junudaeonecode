@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f8fb">
+  <title>김대원 & 이준우의 코드 공유 사이트</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/lib/codemirror.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="홈으로 이동">
+        <span class="brand-mark" aria-hidden="true">&lt;/&gt;</span>
+        <span>김대원 &amp; 이준우의 코드 공유 사이트</span>
+      </a>
+      <div class="top-actions">
+        <span id="shareTag" class="share-tag" hidden></span>
+        <button id="logoutBtn" class="button button-quiet" type="button" hidden>로그아웃</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="editor-card" aria-label="코드 편집기">
+        <div class="toolbar">
+          <div class="language-group">
+            <label for="languageSelect">언어</label>
+            <div class="language-select-wrap">
+              <select id="languageSelect" aria-label="코드 언어">
+                <option value="plaintext">Plain Text</option>
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="json">JSON</option>
+                <option value="html">HTML</option>
+                <option value="xml">XML</option>
+                <option value="css">CSS</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="c">C</option>
+                <option value="cpp">C++</option>
+                <option value="csharp">C#</option>
+                <option value="kotlin">Kotlin</option>
+                <option value="swift">Swift</option>
+                <option value="php">PHP</option>
+                <option value="ruby">Ruby</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+                <option value="shell">Shell</option>
+                <option value="sql">SQL</option>
+                <option value="markdown">Markdown</option>
+                <option value="yaml">YAML</option>
+              </select>
+              <span id="recognizedBadge" class="recognized-badge">인식됨</span>
+            </div>
+            <button id="autoDetectBtn" class="button button-quiet button-small" type="button">자동 감지</button>
+          </div>
+
+          <div class="toolbar-actions">
+            <button id="copyBtn" class="button button-quiet" type="button">코드 복사</button>
+            <button id="shareBtn" class="button button-primary" type="button">공유 링크 만들기</button>
+          </div>
+        </div>
+
+        <textarea id="editor" aria-label="코드 입력"></textarea>
+
+        <div class="editor-footer">
+          <span id="codeStats">0자 · 1줄</span>
+          <span id="accessState"></span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="shareDialog" class="share-dialog">
+    <form method="dialog" class="dialog-card" id="shareForm">
+      <div class="dialog-heading">
+        <div>
+          <h2>공유 링크 만들기</h2>
+          <p>공유 링크를 열 때 필요한 권한을 선택하세요.</p>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="닫기" type="submit">×</button>
+      </div>
+
+      <label class="field-label" for="shareVisibility">공유 링크 열기</label>
+      <select id="shareVisibility" class="dialog-select">
+        <option value="protected" selected>비밀번호 입력</option>
+        <option value="public">비밀번호 없이 보기</option>
+      </select>
+
+      <div id="shareResult" class="share-result" hidden>
+        <label class="field-label" for="shareUrl">공유 주소</label>
+        <div class="share-url-row">
+          <input id="shareUrl" type="text" readonly>
+          <button id="copyShareUrlBtn" class="button button-quiet" type="button">복사</button>
+        </div>
+      </div>
+
+      <p id="shareError" class="dialog-error" role="alert"></p>
+
+      <div class="dialog-actions">
+        <button class="button button-quiet" value="cancel" type="submit">취소</button>
+        <button id="createShareBtn" class="button button-primary" type="button">만들기</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/lib/codemirror.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/addon/display/placeholder.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/addon/mode/loadmode.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/xml/xml.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/javascript/javascript.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/css/css.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/htmlmixed/htmlmixed.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/clike/clike.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.11.2/lib/common.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
