@@ -9,6 +9,9 @@ import {
   profileName,
   setIdentity
 } from "../_lib/identity.js";
+import {
+  clearNetworkPresence
+} from "../_lib/presence.js";
 
 async function migrateVisitorShares(env, networkId, newProfile) {
   if (!env.CODE_SHARES || newProfile === "visitor") return;
@@ -99,6 +102,11 @@ export async function onRequestPut(context) {
   }
 
   const before = await getIdentity(context.request, context.env);
+
+  if (before.profile !== profile) {
+    await clearNetworkPresence(context.env, before.networkId, before.profile);
+  }
+
   if (before.profile === "visitor" && profile !== "visitor") {
     await migrateVisitorShares(context.env, before.networkId, profile);
   }
