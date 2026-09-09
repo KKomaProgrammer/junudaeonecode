@@ -618,11 +618,10 @@
     closeFadeDialog(messageGuideDialog);
     setTimeout(prepareMessageShareDialog, 190);
   });
-  guideShareBtn.addEventListener("click", async () => {
+  guideShareBtn.addEventListener("click", () => {
     markMessageGuideSeen();
     closeFadeDialog(messageGuideDialog);
-    await new Promise((resolve) => setTimeout(resolve, 190));
-    await shareMessageFile();
+    void shareMessageFile();
   });
   messageInfoBtn.addEventListener("click", () => {
     closeFadeDialog(messageShareDialog);
