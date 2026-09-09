@@ -57,11 +57,14 @@ export async function markPresenceOffline(env, identity, sessionId) {
   const safeId = safeSessionId(sessionId);
   if (!safeId) return false;
 
+  const key = deviceKey(identity.networkId, safeId);
+  const existing = await env.CODE_SHARES.get(key, "json");
+  const profile = isNamedProfile(existing?.profile)
+    ? existing.profile
+    : (isNamedProfile(identity?.profile) ? identity.profile : null);
   const now = new Date().toISOString();
-  const tasks = [env.CODE_SHARES.delete(deviceKey(identity.networkId, safeId))];
-  if (isNamedProfile(identity?.profile)) {
-    tasks.push(env.CODE_SHARES.put(lastSeenKey(identity.profile), now));
-  }
+  const tasks = [env.CODE_SHARES.delete(key)];
+  if (profile) tasks.push(env.CODE_SHARES.put(lastSeenKey(profile), now));
   await Promise.all(tasks);
   return true;
 }
@@ -101,14 +104,14 @@ export async function getPresenceSummary(env, profileNames) {
   const result = {};
 
   for (const profile of ["junwoo", "daewon"]) {
-    const active = records.filter((record) => {
-      if (record?.profile !== profile) return false;
+    const profileRecords = records.filter((record) => record?.profile === profile);
+    const active = profileRecords.filter((record) => {
       const time = Date.parse(record.lastSeen || "");
       return Number.isFinite(time) && now - time <= ONLINE_WINDOW_MS;
     });
 
     let lastSeen = normalizeTime(await env.CODE_SHARES.get(lastSeenKey(profile)));
-    for (const record of records.filter((item) => item?.profile === profile)) {
+    for (const record of profileRecords) {
       const normalized = normalizeTime(record.lastSeen);
       if (normalized && (!lastSeen || Date.parse(normalized) > Date.parse(lastSeen))) {
         lastSeen = normalized;
