@@ -1,12 +1,23 @@
 (() => {
   "use strict";
 
-  const junwooStatus = document.getElementById("junwooPresence");
-  const daewonStatus = document.getElementById("daewonPresence");
+  const junwooStatus = document.getElementById("junwooPresence") || document.querySelector('[data-profile="junwoo"] span');
+  const daewonStatus = document.getElementById("daewonPresence") || document.querySelector('[data-profile="daewon"] span');
   const identityName = document.getElementById("identityName");
   const identityDialog = document.getElementById("identityDialog");
 
   if (!junwooStatus || !daewonStatus) return;
+
+  junwooStatus.classList.add("presence-status");
+  daewonStatus.classList.add("presence-status");
+
+  const style = document.createElement("style");
+  style.textContent = `
+    .presence-status[data-online="true"]{color:#18864b!important;font-weight:750}
+    .presence-status[data-online="true"]::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#22a55b;margin-right:6px;vertical-align:1px;box-shadow:0 0 0 3px rgba(34,165,91,.12)}
+    .presence-status[data-online="false"]{color:#727985!important}
+  `;
+  document.head.appendChild(style);
 
   const refs = {
     junwoo: junwooStatus,
