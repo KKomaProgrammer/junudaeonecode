@@ -119,8 +119,8 @@
         <strong id="networkIdText">확인 중</strong>
       </div>
       <div id="profileChoices" class="profile-choices">
-        <button class="profile-choice" type="button" data-profile="junwoo"><strong>이준우</strong><span>이 기기를 이준우로 연결</span></button>
-        <button class="profile-choice" type="button" data-profile="daewon"><strong>김대원</strong><span>이 기기를 김대원으로 연결</span></button>
+        <button class="profile-choice" type="button" data-profile="junwoo"><strong>이준우</strong><span id="junwooPresence">상태 확인 중...</span></button>
+        <button class="profile-choice" type="button" data-profile="daewon"><strong>김대원</strong><span id="daewonPresence">상태 확인 중...</span></button>
         <button class="profile-choice" type="button" data-profile="visitor"><strong>방문자</strong><span>개인 프로필 연결 해제</span></button>
       </div>
       <p class="dialog-help">원본 IP 주소는 공유 화면에 표시하지 않습니다. 같은 사람에게 여러 기기/네트워크 ID를 연결할 수 있습니다.</p>
@@ -192,5 +192,6 @@
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.21/mode/clike/clike.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.2/build/highlight.min.js"></script>
   <script src="/app.js"></script>
+  <script src="/presence.js"></script>
 </body>
 </html>
