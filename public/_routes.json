@@ -1,5 +1,5 @@
 {
   "version": 1,
   "include": ["/*"],
-  "exclude": ["/app.js", "/style.css"]
+  "exclude": ["/app.js", "/presence.js", "/style.css"]
 }
