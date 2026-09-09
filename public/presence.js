@@ -62,13 +62,11 @@
   function renderProfile(profile, data) {
     const element = refs[profile];
     if (!element) return;
-
     if (!data) {
       element.textContent = "상태 확인 불가";
       element.dataset.online = "false";
       return;
     }
-
     if (data.online) {
       const count = Number(data.activeSessions || 0);
       element.textContent = count > 1 ? `접속 중 · ${count}개 세션` : "접속 중";
@@ -95,9 +93,10 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, sessionId })
       });
-      return response.ok;
+      const data = await response.json().catch(() => ({}));
+      return response.ok ? data : null;
     } catch {
-      return false;
+      return null;
     }
   }
 
@@ -120,7 +119,7 @@
   }
 
   async function sendHeartbeat() {
-    if (document.visibilityState !== "visible") return false;
+    if (document.visibilityState !== "visible") return null;
     leaving = false;
     return postPresence("heartbeat", true);
   }
@@ -145,15 +144,30 @@
   }
 
   async function heartbeatAndRefresh() {
-    await sendHeartbeat();
+    const heartbeat = await sendHeartbeat();
     await refreshPresence();
+    if (heartbeat?.recorded && refs[heartbeat.profile]) {
+      renderProfile(heartbeat.profile, {
+        online: true,
+        activeSessions: 1,
+        lastSeen: heartbeat.lastSeen
+      });
+    }
   }
 
   function startTimers() {
     clearInterval(refreshTimer);
     clearInterval(heartbeatTimer);
     refreshTimer = setInterval(refreshPresence, REFRESH_MS);
-    heartbeatTimer = setInterval(sendHeartbeat, HEARTBEAT_MS);
+    heartbeatTimer = setInterval(async () => {
+      const heartbeat = await sendHeartbeat();
+      if (heartbeat?.recorded && refs[heartbeat.profile]) {
+        refs[heartbeat.profile].dataset.online = "true";
+        if (!refs[heartbeat.profile].textContent.startsWith("접속 중")) {
+          refs[heartbeat.profile].textContent = "접속 중";
+        }
+      }
+    }, HEARTBEAT_MS);
   }
 
   document.addEventListener("visibilitychange", () => {
@@ -162,7 +176,6 @@
       heartbeatAndRefresh();
     } else {
       beaconLeave();
-      setTimeout(refreshPresence, 250);
     }
   });
 
