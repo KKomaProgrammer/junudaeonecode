@@ -17,7 +17,12 @@
       </a>
       <div class="top-actions">
         <span id="shareTag" class="share-tag" hidden></span>
-        <button id="logoutBtn" class="button button-quiet" type="button" hidden>로그아웃</button>
+        <button id="mySharesBtn" class="button button-quiet top-button" type="button">내 공유</button>
+        <button id="identityBtn" class="identity-button" type="button" aria-label="프로필 변경">
+          <span class="identity-dot" aria-hidden="true"></span>
+          <span id="identityName">방문자</span>
+        </button>
+        <button id="logoutBtn" class="button button-quiet top-button" type="button" hidden>로그아웃</button>
       </div>
     </header>
 
@@ -30,16 +35,11 @@
               <button id="languageTrigger" class="language-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
                 <span id="languageTriggerText" class="language-trigger-text">자동 인식</span>
                 <span id="recognizedBadge" class="recognized-badge" hidden>인식됨</span>
-                <svg class="chevron-icon" viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="m6 8 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <svg class="chevron-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
               <div id="languageMenu" class="language-menu" hidden>
                 <div class="language-search-wrap">
-                  <svg viewBox="0 0 20 20" aria-hidden="true">
-                    <circle cx="8.5" cy="8.5" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
-                    <path d="m12.4 12.4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                  </svg>
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m12.4 12.4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                   <input id="languageSearch" type="search" autocomplete="off" placeholder="언어 검색" aria-label="언어 검색">
                 </div>
                 <div id="languageOptions" class="language-options" role="listbox" aria-label="코드 언어"></div>
@@ -52,6 +52,14 @@
             <button id="messageShareBtn" class="button button-quiet" type="button">문자로 공유하기</button>
             <button id="shareBtn" class="button button-primary" type="button">공유 링크 만들기</button>
           </div>
+        </div>
+
+        <div id="shareInfoBar" class="share-info-bar" hidden>
+          <div class="share-info-copy">
+            <strong id="shareTitleText"></strong>
+            <span id="shareAuthorText"></span>
+          </div>
+          <button id="deleteCurrentShareBtn" class="button button-danger-subtle" type="button" hidden>공유 삭제</button>
         </div>
 
         <textarea id="editor" aria-label="코드 입력"></textarea>
@@ -67,17 +75,17 @@
     </main>
   </div>
 
-  <dialog id="shareDialog" class="share-dialog">
-    <form method="dialog" class="dialog-card" id="shareForm">
+  <dialog id="shareDialog" class="fade-dialog share-dialog">
+    <div class="dialog-card">
       <div class="dialog-heading">
-        <div>
-          <h2>공유 링크 만들기</h2>
-          <p>공유 링크를 열 때 필요한 권한을 선택하세요.</p>
-        </div>
-        <button class="icon-button" value="cancel" aria-label="닫기" type="submit">×</button>
+        <div><h2>공유 링크 만들기</h2><p>제목과 공유 권한을 설정하세요.</p></div>
+        <button class="icon-button" data-close="shareDialog" aria-label="닫기" type="button">×</button>
       </div>
 
-      <label class="field-label" for="shareVisibility">공유 링크 열기</label>
+      <label class="field-label" for="shareTitle">제목</label>
+      <input id="shareTitle" class="dialog-input" type="text" maxlength="80" placeholder="예: 로그인 페이지 코드">
+
+      <label class="field-label field-gap" for="shareVisibility">공유 링크 열기</label>
       <select id="shareVisibility" class="dialog-select">
         <option value="protected" selected>비밀번호 입력</option>
         <option value="public">비밀번호 없이 보기</option>
@@ -89,25 +97,61 @@
           <input id="shareUrl" type="text" readonly>
           <button id="copyShareUrlBtn" class="button button-quiet" type="button">복사</button>
         </div>
+        <p id="shareCreatorResult" class="result-note"></p>
       </div>
 
       <p id="shareError" class="dialog-error" role="alert"></p>
-
       <div class="dialog-actions">
-        <button class="button button-quiet" value="cancel" type="submit">취소</button>
+        <button class="button button-quiet" data-close="shareDialog" type="button">취소</button>
         <button id="createShareBtn" class="button button-primary" type="button">만들기</button>
       </div>
-    </form>
+    </div>
+  </dialog>
+
+  <dialog id="identityDialog" class="fade-dialog compact-dialog">
+    <div class="dialog-card">
+      <div class="dialog-heading compact-heading">
+        <div><h2>현재 프로필</h2><p>이 기기/네트워크를 사용할 사람을 선택하세요.</p></div>
+        <button class="icon-button" data-close="identityDialog" aria-label="닫기" type="button">×</button>
+      </div>
+      <div class="network-card">
+        <span>IP 기반 기기/네트워크 ID</span>
+        <strong id="networkIdText">확인 중</strong>
+      </div>
+      <div id="profileChoices" class="profile-choices">
+        <button class="profile-choice" type="button" data-profile="junwoo"><strong>이준우</strong><span>이 기기를 이준우로 연결</span></button>
+        <button class="profile-choice" type="button" data-profile="daewon"><strong>김대원</strong><span>이 기기를 김대원으로 연결</span></button>
+        <button class="profile-choice" type="button" data-profile="visitor"><strong>방문자</strong><span>개인 프로필 연결 해제</span></button>
+      </div>
+      <p class="dialog-help">원본 IP 주소는 공유 화면에 표시하지 않습니다. 같은 사람에게 여러 기기/네트워크 ID를 연결할 수 있습니다.</p>
+      <p id="identityError" class="dialog-error" role="alert"></p>
+    </div>
+  </dialog>
+
+  <dialog id="mySharesDialog" class="fade-dialog wide-dialog">
+    <div class="dialog-card">
+      <div class="dialog-heading">
+        <div><h2>내 공유 링크</h2><p id="mySharesSubtitle">내 프로필로 만든 공유 링크입니다.</p></div>
+        <button class="icon-button" data-close="mySharesDialog" aria-label="닫기" type="button">×</button>
+      </div>
+      <div id="mySharesList" class="my-shares-list"></div>
+      <p id="mySharesError" class="dialog-error" role="alert"></p>
+    </div>
+  </dialog>
+
+  <dialog id="confirmDeleteDialog" class="fade-dialog compact-dialog">
+    <div class="dialog-card">
+      <div class="dialog-heading compact-heading"><div><h2>공유 링크 삭제</h2><p id="deleteConfirmText">이 공유 링크를 삭제할까요?</p></div></div>
+      <div class="dialog-actions">
+        <button id="cancelDeleteBtn" class="button button-quiet" type="button">취소</button>
+        <button id="confirmDeleteBtn" class="button button-danger" type="button">삭제</button>
+      </div>
+    </div>
   </dialog>
 
   <dialog id="messageGuideDialog" class="fade-dialog compact-dialog">
     <div class="dialog-card">
-      <div class="dialog-heading compact-heading">
-        <div>
-          <h2>문자로 공유하기</h2>
-          <p>파일을 메시지로 보내기 전에 확인해 주세요.</p>
-        </div>
-      </div>
+      <div class="dialog-heading compact-heading"><div><h2>문자로 공유하기</h2><p>파일을 메시지로 보내기 전에 확인해 주세요.</p></div></div>
       <p class="guide-copy">내용이 없거나 깨진 png로 다운로드 됩니다. 메시지로 공유한 후 상대방이 확장자를 png에서 txt로 변경하라고 알려주세요. 휴대폰으로 공유를 클릭해 전송도 가능합니다.</p>
       <div class="dialog-actions">
         <button id="guideConfirmBtn" class="button button-quiet" type="button">확인</button>
@@ -119,24 +163,14 @@
   <dialog id="messageShareDialog" class="fade-dialog compact-dialog">
     <div class="dialog-card">
       <div class="dialog-heading compact-heading">
-        <div>
-          <h2>문자로 공유하기</h2>
-          <p>현재 코드를 .png 파일로 준비합니다.</p>
-        </div>
+        <div><h2>문자로 공유하기</h2><p>현재 코드를 .png 파일로 준비합니다.</p></div>
         <button id="messageInfoBtn" class="info-icon-button" type="button" aria-label="문자로 공유하기 안내 보기">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/>
-            <path d="M12 10.8v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            <circle cx="12" cy="7.4" r="1.1" fill="currentColor"/>
-          </svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 10.8v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="7.4" r="1.1" fill="currentColor"/></svg>
         </button>
       </div>
       <div class="file-preview-row">
         <div class="file-type">PNG</div>
-        <div class="file-preview-text">
-          <strong id="messageFileName">code.png</strong>
-          <span>상대방이 받은 뒤 확장자를 .txt로 변경</span>
-        </div>
+        <div class="file-preview-text"><strong id="messageFileName">code.png</strong><span>상대방이 받은 뒤 확장자를 .txt로 변경</span></div>
       </div>
       <div class="dialog-actions wrap-actions">
         <button id="messageCloseBtn" class="button button-quiet" type="button">닫기</button>
