@@ -21,7 +21,7 @@ Cloudflare Pages + Pages Functions + Workers KV로 동작하는 간단한 코드
 이 GitHub 저장소를 Cloudflare Pages에 연결합니다.
 
 - Framework preset: `None`
-- Build command: 비움
+- Build command: `exit 0`
 - Build output directory: `public`
 
 ### 2. KV 생성 및 바인딩
