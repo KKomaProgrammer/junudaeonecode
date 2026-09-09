@@ -1,6 +1,6 @@
 # 김대원 & 이준우의 코드 공유 사이트
 
-Cloudflare Pages + Pages Functions + Workers KV로 동작하는 간단한 코드 공유 사이트입니다.
+Cloudflare Pages + Pages Functions + Workers KV로 동작하는 코드 공유 사이트입니다.
 
 ## 주요 기능
 
@@ -12,12 +12,48 @@ Cloudflare Pages + Pages Functions + Workers KV로 동작하는 간단한 코드
 - 자동 인식된 언어에 `인식됨` 표시
 - 언어 직접 선택 가능
 - `/share/4자리ID` 공유 링크 생성
+- 공유할 때 최대 80자의 제목 설정 가능
+- 공유 링크에 작성자(`이준우`, `김대원`, `방문자`) 표시
+- 자신이 만든 공유 링크 목록 조회, 열기, 주소 복사, 삭제
 - 공유 링크 기본값: `비밀번호 입력`
 - 공유 링크 옵션: `비밀번호 없이 보기`
 - `문자로 공유하기`: 코드 내용을 그대로 넣은 `.png` 확장자 파일 생성, 다운로드 및 Web Share API 공유 지원
 - 문자 공유 안내는 최초 1회 자동 표시하고 이후 정보 아이콘에서 다시 확인 가능
 - Cloudflare 환경변수 `ACCESS_PASSWORD` 기반 사이트 접속 보호
 - `ACCESS_PASSWORD`를 삭제하거나 빈 값으로 두면 접속 비밀번호 비활성화
+
+## 기기/IP 기반 프로필
+
+Cloudflare가 전달하는 접속 IP와 브라우저 User-Agent를 서버에서 결합한 뒤 해시하여 `기기/네트워크 ID`를 만듭니다. 원본 IP 주소는 공유 레코드나 브라우저 화면에 저장·표시하지 않습니다.
+
+각 기기/네트워크 ID는 다음 프로필 중 하나로 연결할 수 있습니다.
+
+- `이준우`
+- `김대원`
+- `방문자`
+
+같은 사람이 서로 다른 Wi-Fi, 모바일 데이터, 기기 등을 사용해 여러 ID가 생겨도 각각 동일한 프로필에 연결할 수 있습니다. `이준우` 또는 `김대원`으로 만든 공유 링크는 그 프로필에 연결된 다른 기기/네트워크에서도 `내 공유`에 함께 나타납니다. 방문자는 각 기기/네트워크 ID별로 별도 소유자로 처리됩니다.
+
+프로필 전환은 `ACCESS_PASSWORD`가 설정되어 있으면 로그인한 상태에서만 가능합니다. 프로필 전환은 편의상 작성자를 구분하기 위한 기능이며, IP는 변경되거나 공유될 수 있으므로 금융·개인정보 시스템 수준의 강한 사용자 인증 수단으로 사용하면 안 됩니다.
+
+### 선택 권장: IDENTITY_SALT
+
+IP 기반 식별값의 해시를 더 안전하게 만들려면 Cloudflare Pages의 Variables and Secrets에 충분히 긴 임의의 Secret을 추가할 수 있습니다.
+
+- Name: `IDENTITY_SALT`
+- Value: 예측하기 어려운 긴 임의 문자열
+
+`IDENTITY_SALT`가 없으면 `ACCESS_PASSWORD`를 salt로 사용하며, 둘 다 없을 때만 코드 내부 기본값을 사용합니다.
+
+## 공유 링크 소유권과 삭제
+
+새 공유 링크에는 생성 당시의 프로필 소유권이 저장됩니다. 현재 기기/네트워크가 같은 소유 프로필로 식별될 때만 삭제할 수 있습니다.
+
+- `이준우`가 만든 링크 → `이준우` 프로필에서 삭제 가능
+- `김대원`이 만든 링크 → `김대원` 프로필에서 삭제 가능
+- `방문자`가 만든 링크 → 생성 당시 방문자 기기/네트워크 ID에서 삭제 가능
+
+이 기능 추가 전에 만들어진 기존 공유 링크에는 과거 소유권 정보가 없으므로 작성자가 `알 수 없음`으로 표시될 수 있고, 새 소유권 규칙으로 임의 삭제되지 않습니다.
 
 ## Cloudflare Pages 배포
 
@@ -33,7 +69,7 @@ Cloudflare Pages + Pages Functions + Workers KV로 동작하는 간단한 코드
 
 ### 2. KV 생성 및 바인딩
 
-4자리 공유 ID에 대응하는 코드를 저장하기 위해 Workers KV namespace가 필요합니다.
+4자리 공유 ID, 프로필 매핑, 소유자별 공유 목록을 저장하기 위해 Workers KV namespace가 필요합니다.
 
 Cloudflare 대시보드에서 KV namespace를 만든 뒤 Pages 프로젝트의 **Settings → Bindings**에서 다음 이름으로 연결합니다.
 
@@ -55,6 +91,7 @@ Pages 프로젝트의 **Settings → Variables and Secrets**에서 아래 값을
 - 메인 사이트 접속 시 비밀번호 필요
 - 기본 공유 옵션인 `비밀번호 입력` 링크도 비밀번호 필요
 - `비밀번호 없이 보기`로 만든 링크는 비밀번호 없이 열람 가능
+- 프로필 전환 및 `내 공유` 관리에는 인증 필요
 
 `ACCESS_PASSWORD`를 삭제하거나 빈 값으로 설정하면 사이트 전체가 비밀번호 없이 열립니다.
 
@@ -70,6 +107,7 @@ Pages Functions까지 포함해 테스트하려면 Wrangler Pages 개발 서버�
 
 ```dotenv
 ACCESS_PASSWORD="your-password"
+IDENTITY_SALT="use-a-long-random-secret-here"
 ```
 
 `.dev.vars`와 `.env` 계열 파일은 `.gitignore`에 포함되어 저장소에 올라가지 않습니다.
